@@ -58,6 +58,7 @@ public class KanimViewer : MonoBehaviour {
 					var propertyBlock = propertyBlocks[i];
 					var element = currentFrame.elements[i];
 					var frame = FindSymbolFrame(element.name, element.frame);
+					render.gameObject.name = element.name + ' ' + element.frame;
 
 					if (frame != null) {
 						propertyBlock.SetFloat("_a", element.a);
@@ -68,6 +69,8 @@ public class KanimViewer : MonoBehaviour {
 						var offY = frame.y - frame.h * 0.5f;
 						propertyBlock.SetFloat("_tx", element.tx + element.a * offX + element.c * offY);
 						propertyBlock.SetFloat("_ty", -element.ty - element.b * offX - element.d * offY);
+						propertyBlock.SetColor("_CM", element.colorMult);
+						propertyBlock.SetColor("_CA", element.colorAdd);
 						propertyBlock.SetTexture("_MainTex", frame.sprite.texture);
 
 						render.sprite = frame.sprite;
@@ -83,6 +86,7 @@ public class KanimViewer : MonoBehaviour {
 		}
 	}
 	private BuildDef.Symbol.Frame FindSymbolFrame(string symbol, int frameIdx) {
+		symbol = symbol.ToLower();
 		foreach (var build in buildDefs) {
 			if (build.symbols.ContainsKey(symbol) && build.symbols[symbol].frames.Length > frameIdx) {
 				return build.symbols[symbol].frames[frameIdx];

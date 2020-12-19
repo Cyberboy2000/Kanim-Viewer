@@ -48,7 +48,7 @@ public class BuildDef : System.IDisposable {
 				var symbolObj = new Symbol();
 				symbolObj.name = symbolXml.Attributes.GetNamedItem("name").InnerText;
 				symbolObj.frames = new Symbol.Frame[symbolXml.ChildNodes.Count];
-				buildDef.symbols.Add(symbolObj.name, symbolObj);
+				buildDef.symbols.Add(symbolObj.name.ToLower(), symbolObj);
 
 				int i = 0;
 				foreach (XmlNode frame in symbolXml.ChildNodes) {

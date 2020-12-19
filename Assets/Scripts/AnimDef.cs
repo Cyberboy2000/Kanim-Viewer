@@ -17,7 +17,8 @@ public class AnimDef {
 				public float d;
 				public float tx;
 				public float ty;
-				public Color color;
+				public Color colorMult;
+				public Color colorAdd;
 			}
 
 			public Element[] elements;
@@ -86,7 +87,13 @@ public class AnimDef {
 						var g = float.Parse(element.Attributes.GetNamedItem("c_11").InnerText, CultureInfo.InvariantCulture);
 						var b = float.Parse(element.Attributes.GetNamedItem("c_22").InnerText, CultureInfo.InvariantCulture);
 						var alpha = float.Parse(element.Attributes.GetNamedItem("c_33").InnerText, CultureInfo.InvariantCulture);
-						elem.color = new Color(r, g, b, alpha);
+						elem.colorMult = new Color(r, g, b, alpha);
+
+						var rAdd = float.Parse(element.Attributes.GetNamedItem("c_04").InnerText, CultureInfo.InvariantCulture);
+						var gAdd = float.Parse(element.Attributes.GetNamedItem("c_14").InnerText, CultureInfo.InvariantCulture);
+						var bAdd = float.Parse(element.Attributes.GetNamedItem("c_24").InnerText, CultureInfo.InvariantCulture);
+						var aAdd = float.Parse(element.Attributes.GetNamedItem("c_34").InnerText, CultureInfo.InvariantCulture);
+						elem.colorAdd = new Color(rAdd, gAdd, bAdd, aAdd);
 					}
 				}
 			}
