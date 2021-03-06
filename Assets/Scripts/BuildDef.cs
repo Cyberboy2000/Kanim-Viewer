@@ -70,7 +70,7 @@ public class BuildDef : System.IDisposable {
 							Texture2D tex = new Texture2D(2, 2);
 							tex.LoadImage(pngBytes);
 							buildDef.textures.Add(frameObj.image, tex);
-							var sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0, 1), 1);
+							var sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0, 1), 1,0,SpriteMeshType.FullRect);
 							sprite.name = frameObj.image;
 							sprites.Add(frameObj.image, sprite);
 						}

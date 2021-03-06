@@ -16,6 +16,7 @@ public class KanimController : MonoBehaviour {
 
 	public KanimViewer kanim;
 	public Camera orthoCamera;
+	public EventSystem eventSystem;
 	public Text rateTxt;
 	public Slider rateSlider;
 	public Text idxTxt;
@@ -23,17 +24,22 @@ public class KanimController : MonoBehaviour {
 	public Button leftButton;
 	public Button rightButton;
 	public Button pauseButton;
+	public Text pauseText;
 	public Slider zoomSlider;
 	public Button zoomUpButton;
 	public Button zoomDownButton;
 	public Button addFileButton;
 	public Button quitButton;
 	public Button fullScreenButton;
+	public Button resetPositionButton;
 	public Button listedFileTemplate;
 	public FileBrowser fileBrowser;
 	public Dropdown dropdown;
 	public float fileListSpacing = 30;
 	public UnloadFileConfirmer confirmer;
+
+	private bool dragging = false;
+	private Vector3 lastMousePosition;
 	private StoredFile currentAnimDef;
 	private List<StoredFile> listedFiles = new List<StoredFile>();
 
@@ -48,6 +54,7 @@ public class KanimController : MonoBehaviour {
 		pauseButton.onClick.AddListener(Pause);
 		zoomUpButton.onClick.AddListener(ZoomUp);
 		zoomDownButton.onClick.AddListener(ZoomDown);
+		resetPositionButton.onClick.AddListener(ResetPosition);
 		quitButton.onClick.AddListener(Quit);
 		addFileButton.onClick.AddListener(AddFile);
 		listedFileTemplate.gameObject.SetActive(false);
@@ -61,6 +68,33 @@ public class KanimController : MonoBehaviour {
 		rateTxt.text = "Frames Per Second: " + kanim.frameRate;
 		idxSlider.maxValue = kanim.GetAnimLength() - 1;
 		idxSlider.value = kanim.GetFrameIdx();
+
+		if (Input.GetMouseButtonDown(0) && !eventSystem.IsPointerOverGameObject()) {
+			dragging = true;
+			lastMousePosition = Input.mousePosition;
+		} else if (!Input.GetMouseButton(0)) {
+			dragging = false;
+		} else if (dragging) {
+			Vector3 mousePos = Input.mousePosition;
+			Vector3 delta = lastMousePosition - mousePos;
+			orthoCamera.transform.position += 2 * delta * orthoCamera.orthographicSize / Screen.height;
+			lastMousePosition = mousePos;
+		}
+
+		float scroll = Input.mouseScrollDelta.y;
+		if (scroll != 0) {
+			float oldSize = orthoCamera.orthographicSize;
+			float targetX = Input.mousePosition.x / Screen.height - 0.5f * orthoCamera.aspect;
+			float targetY = Input.mousePosition.y / Screen.height - 0.5f;
+
+			zoomSlider.value = Mathf.Clamp(zoomSlider.value + scroll, zoomSlider.minValue, zoomSlider.maxValue);
+			ZoomChanged(zoomSlider.value);
+
+			float newX = targetX * oldSize / orthoCamera.orthographicSize;
+			float newY = targetY * oldSize / orthoCamera.orthographicSize;
+
+			orthoCamera.transform.position += new Vector3(newX - targetX, newY - targetY) * 2 * orthoCamera.orthographicSize;
+		} 
 	}
 
 	void RateChanged(float to) {
@@ -87,6 +121,10 @@ public class KanimController : MonoBehaviour {
 		ZoomChanged(zoomSlider.value);
 	}
 
+	void ResetPosition() {
+		orthoCamera.transform.position = new Vector3(0,0,-10);
+	}
+
 	void Left() {
 		var i = kanim.GetFrameIdx() - 1;
 		if (i < 0) {
@@ -100,12 +138,13 @@ public class KanimController : MonoBehaviour {
 	}
 
 	void Pause() {
-		if (rateSlider.value == 0) {
-			rateSlider.value = 30;
+		if (kanim.paused) {
+			kanim.paused = false;
+			pauseText.text = "||";
 		} else {
-			rateSlider.value = 0;
+			kanim.paused = true;
+			pauseText.text = '\u00BB'.ToString();
 		}
-		RateChanged(rateSlider.value);
 	}
 
 	void TryAddFile(string fullDirectoryPath) {

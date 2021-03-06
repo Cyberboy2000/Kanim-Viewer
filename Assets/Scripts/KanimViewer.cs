@@ -9,7 +9,9 @@ using UnityEngine;
 public class KanimViewer : MonoBehaviour {
 	[Range(0,60)]
 	public int frameRate = 30;
+	public bool paused = false;
 	public Material material;
+	public Transform spriteParent;
 
 	List<BuildDef> buildDefs = new List<BuildDef>();
 	List<AnimDef> animDefs = new List<AnimDef>();
@@ -33,18 +35,21 @@ public class KanimViewer : MonoBehaviour {
 		}
 
 		if (currentKanim != null) {
-			frameProgress += Time.deltaTime * frameRate;
-			if (frameProgress >= 1) {
-				frameProgress--;
-				frameIdx++;
-				if (currentKanim.frames.Length <= frameIdx) {
-					frameIdx = 0;
+			if (!paused) {
+				frameProgress += Time.deltaTime * frameRate;
+				if (frameProgress >= 1) {
+					frameProgress--;
+					frameIdx++;
+					if (currentKanim.frames.Length <= frameIdx) {
+						frameIdx = 0;
+					}
 				}
 			}
 
 			var currentFrame = currentKanim.frames[frameIdx];
 			for (var k = renderers.Count; k < currentFrame.elements.Length; k++) {
 				var newObj = new GameObject();
+				newObj.transform.parent = spriteParent;
 				var render = newObj.AddComponent<SpriteRenderer>();
 				render.sortingOrder = -k;
 				render.material = material; ;
