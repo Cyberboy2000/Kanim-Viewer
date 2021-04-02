@@ -31,9 +31,11 @@ public class KanimController : MonoBehaviour {
 	public Button addFileButton;
 	public Button quitButton;
 	public Button fullScreenButton;
+	public Button bgColorBtn;
 	public Button resetPositionButton;
 	public Button listedFileTemplate;
 	public FileBrowser fileBrowser;
+	public ColorPicker colorPicker;
 	public Dropdown dropdown;
 	public float fileListSpacing = 30;
 	public UnloadFileConfirmer confirmer;
@@ -60,6 +62,7 @@ public class KanimController : MonoBehaviour {
 		listedFileTemplate.gameObject.SetActive(false);
 		dropdown.onValueChanged.AddListener(OnDropDownChanged);
 		fullScreenButton.onClick.AddListener(FullScreen);
+		bgColorBtn.onClick.AddListener(ShowBGColor);
 	}
 
     // Update is called once per frame
@@ -244,6 +247,14 @@ public class KanimController : MonoBehaviour {
 
 	void FullScreen() {
 		Screen.fullScreen = !Screen.fullScreen;
+	}
+
+	void ShowBGColor() {
+		colorPicker.Show(orthoCamera.backgroundColor, ChangeBGColor);
+	}
+
+	void ChangeBGColor(Color color) {
+		orthoCamera.backgroundColor = color;
 	}
 
 	void Quit() {

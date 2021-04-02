@@ -22,11 +22,7 @@ public class KanimViewer : MonoBehaviour {
 	private float frameProgress = -1;
 	private int frameIdx;
 	private AnimDef.Kanim currentKanim;
-
-	private void Start() {
-		//LoadBuild("D:/Spel/Unity/Kanim Viewer/Assets/StreamingAssets/lady_sharpshooter_face.anim");
-		//LoadAnimDef("D:/Spel/Unity/Kanim Viewer/Assets/StreamingAssets/lady_sharpshooter_face.anim");
-	}
+	public static bool updateFrame = false;
 
 	// Update is called once per frame
 	void Update() {
@@ -40,52 +36,58 @@ public class KanimViewer : MonoBehaviour {
 				if (frameProgress >= 1) {
 					frameProgress--;
 					frameIdx++;
+					updateFrame = true;
 					if (currentKanim.frames.Length <= frameIdx) {
 						frameIdx = 0;
 					}
 				}
 			}
 
-			var currentFrame = currentKanim.frames[frameIdx];
-			for (var k = renderers.Count; k < currentFrame.elements.Length; k++) {
-				var newObj = new GameObject();
-				newObj.transform.parent = spriteParent;
-				var render = newObj.AddComponent<SpriteRenderer>();
-				render.sortingOrder = -k;
-				render.material = material; ;
-				renderers.Add(render);
-				propertyBlocks.Add(new MaterialPropertyBlock());
-			}
+			if (updateFrame) {
+				updateFrame = false;
 
-			for (var i = 0; i < renderers.Count; i++) {
-				var render = renderers[i];
-				if (i < currentFrame.elements.Length) {
-					var propertyBlock = propertyBlocks[i];
-					var element = currentFrame.elements[i];
-					var frame = FindSymbolFrame(element.name, element.frame);
-					render.gameObject.name = element.name + ' ' + element.frame;
+				var currentFrame = currentKanim.frames[frameIdx];
+				for (var k = renderers.Count; k < currentFrame.elements.Length; k++) {
+					var newObj = new GameObject();
+					newObj.transform.parent = spriteParent;
+					newObj.transform.localPosition = new Vector3(0, 0, 10);
+					var render = newObj.AddComponent<SpriteRenderer>();
+					render.sortingOrder = -k;
+					render.material = material; ;
+					renderers.Add(render);
+					propertyBlocks.Add(new MaterialPropertyBlock());
+				}
 
-					if (frame != null) {
-						propertyBlock.SetFloat("_a", element.a);
-						propertyBlock.SetFloat("_b", -element.b);
-						propertyBlock.SetFloat("_c", -element.c);
-						propertyBlock.SetFloat("_d", element.d);
-						var offX = frame.x - frame.w * 0.5f;
-						var offY = frame.y - frame.h * 0.5f;
-						propertyBlock.SetFloat("_tx", element.tx + element.a * offX + element.c * offY);
-						propertyBlock.SetFloat("_ty", -element.ty - element.b * offX - element.d * offY);
-						propertyBlock.SetColor("_CM", element.colorMult);
-						propertyBlock.SetColor("_CA", element.colorAdd);
-						propertyBlock.SetTexture("_MainTex", frame.sprite.texture);
+				for (var i = 0; i < renderers.Count; i++) {
+					var render = renderers[i];
+					if (i < currentFrame.elements.Length) {
+						var propertyBlock = propertyBlocks[i];
+						var element = currentFrame.elements[i];
+						var frame = FindSymbolFrame(element.name, element.frame);
+						render.gameObject.name = element.name + ' ' + element.frame;
 
-						render.sprite = frame.sprite;
-						render.SetPropertyBlock(propertyBlock);
-						render.gameObject.SetActive(true);
+						if (frame != null) {
+							propertyBlock.SetFloat("_a", element.a);
+							propertyBlock.SetFloat("_b", -element.b);
+							propertyBlock.SetFloat("_c", -element.c);
+							propertyBlock.SetFloat("_d", element.d);
+							var offX = frame.x - frame.w * 0.5f;
+							var offY = frame.y - frame.h * 0.5f;
+							propertyBlock.SetFloat("_tx", element.tx + element.a * offX + element.c * offY);
+							propertyBlock.SetFloat("_ty", -element.ty - element.b * offX - element.d * offY);
+							propertyBlock.SetColor("_CM", element.colorMult);
+							propertyBlock.SetColor("_CA", element.colorAdd);
+							propertyBlock.SetTexture("_MainTex", frame.sprite.texture);
+
+							render.sprite = frame.sprite;
+							render.SetPropertyBlock(propertyBlock);
+							render.gameObject.SetActive(true);
+						} else {
+							render.gameObject.SetActive(false);
+						}
 					} else {
 						render.gameObject.SetActive(false);
 					}
-				} else {
-					render.gameObject.SetActive(false);
 				}
 			}
 		}
@@ -103,8 +105,10 @@ public class KanimViewer : MonoBehaviour {
 
 	public BuildDef LoadBuild(string directory) {
 		var buildDef = BuildDef.LoadBuildDef(directory);
-		if (buildDef != null)
+		if (buildDef != null) {
+			updateFrame = true;
 			buildDefs.Add(buildDef);
+		}
 		return buildDef;
 	}
 
@@ -115,6 +119,7 @@ public class KanimViewer : MonoBehaviour {
 			currentKanim = animDef.kanims[0];
 			frameIdx = 0;
 			frameProgress = -1;
+			updateFrame = true;
 		}
 		return animDef;
 	}
@@ -142,6 +147,7 @@ public class KanimViewer : MonoBehaviour {
 		}
 
 		if (idx != frameIdx) {
+			updateFrame = true;
 			frameIdx = idx;
 		}
 	}
@@ -157,14 +163,17 @@ public class KanimViewer : MonoBehaviour {
 	}
 
 	public void RemoveBuildDef(BuildDef build) {
+		updateFrame = true;
 		buildDefs.Remove(build);
 	}
 
 	public void RemoveAnimDef(AnimDef anim) {
+		updateFrame = true;
 		animDefs.Remove(anim);
 	}
 
 	public void SetCurrentKanim(AnimDef.Kanim kanim) {
+		updateFrame = true;
 		currentKanim = kanim;
 		frameIdx = 0;
 		frameProgress = -1;

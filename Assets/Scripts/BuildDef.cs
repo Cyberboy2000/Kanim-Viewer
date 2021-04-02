@@ -48,36 +48,42 @@ public class BuildDef : System.IDisposable {
 				var symbolObj = new Symbol();
 				symbolObj.name = symbolXml.Attributes.GetNamedItem("name").InnerText;
 				symbolObj.frames = new Symbol.Frame[symbolXml.ChildNodes.Count];
-				buildDef.symbols.Add(symbolObj.name.ToLower(), symbolObj);
+				buildDef.symbols[symbolObj.name.ToLower()] = symbolObj;
 
 				int i = 0;
 				foreach (XmlNode frame in symbolXml.ChildNodes) {
 					var frameObj = new Symbol.Frame();
-					symbolObj.frames[i] = frameObj;
-					i++;
-
-					frameObj.framenum = int.Parse(frame.Attributes.GetNamedItem("framenum").InnerText);
-					frameObj.duration = int.Parse(frame.Attributes.GetNamedItem("duration").InnerText);
-					frameObj.w = int.Parse(frame.Attributes.GetNamedItem("w").InnerText);
-					frameObj.h = int.Parse(frame.Attributes.GetNamedItem("h").InnerText);
-					frameObj.x = float.Parse(frame.Attributes.GetNamedItem("x").InnerText, CultureInfo.InvariantCulture);
-					frameObj.y = float.Parse(frame.Attributes.GetNamedItem("y").InnerText, CultureInfo.InvariantCulture);
-					frameObj.image = frame.Attributes.GetNamedItem("image").InnerText;
 
 					try {
-						if (!sprites.ContainsKey(frameObj.image)) {
-							byte[] pngBytes = File.ReadAllBytes(directory + "/" + frameObj.image + ".png");
-							Texture2D tex = new Texture2D(2, 2);
-							tex.LoadImage(pngBytes);
-							buildDef.textures.Add(frameObj.image, tex);
-							var sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0, 1), 1,0,SpriteMeshType.FullRect);
-							sprite.name = frameObj.image;
-							sprites.Add(frameObj.image, sprite);
+						frameObj.framenum = int.Parse(frame.Attributes.GetNamedItem("framenum").InnerText);
+						frameObj.duration = int.Parse(frame.Attributes.GetNamedItem("duration").InnerText);
+						frameObj.w = int.Parse(frame.Attributes.GetNamedItem("w").InnerText);
+						frameObj.h = int.Parse(frame.Attributes.GetNamedItem("h").InnerText);
+						frameObj.x = float.Parse(frame.Attributes.GetNamedItem("x").InnerText, CultureInfo.InvariantCulture);
+						frameObj.y = float.Parse(frame.Attributes.GetNamedItem("y").InnerText, CultureInfo.InvariantCulture);
+						frameObj.image = frame.Attributes.GetNamedItem("image").InnerText;
+
+						symbolObj.frames[i] = frameObj;
+
+						try {
+							if (!sprites.ContainsKey(frameObj.image)) {
+								byte[] pngBytes = File.ReadAllBytes(directory + "/" + frameObj.image + ".png");
+								Texture2D tex = new Texture2D(2, 2);
+								tex.LoadImage(pngBytes);
+								buildDef.textures.Add(frameObj.image, tex);
+								var sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0, 1), 1, 0, SpriteMeshType.FullRect);
+								sprite.name = frameObj.image;
+								sprites.Add(frameObj.image, sprite);
+							}
+							frameObj.sprite = sprites[frameObj.image];
+						} catch (System.Exception ex) {
+							Debug.Log("Failed to load file " + frameObj.image + " : " + ex);
 						}
-						frameObj.sprite = sprites[frameObj.image];
 					} catch (System.Exception ex) {
-						Debug.Log("Failed to load file " + frameObj.image + " : " + ex);
+						Debug.Log("Failed to parse frame " + i + " of symbol " + symbolObj.name + " : " + ex);
 					}
+
+					i++;
 				}
 			}
 
@@ -114,6 +120,8 @@ public class BuildDef : System.IDisposable {
 		if (match.Success) {
 			Group group = match.Groups[1];
 			if (textures.ContainsKey(group.Value)) {
+				KanimViewer.updateFrame = true;
+
 				try {
 					var tex = textures[group.Value];
 					byte[] pngBytes = File.ReadAllBytes(e.FullPath);
