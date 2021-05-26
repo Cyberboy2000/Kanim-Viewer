@@ -12,8 +12,10 @@ public class KanimController : MonoBehaviour {
 		public BuildDef buildDef;
 		public Button button;
 		public List<string> nameList;
+		public AnimDef.Kanim[] kanims;
 	}
 
+	public static AnimDef updatedAnimDef;
 	public KanimViewer kanim;
 	public Camera orthoCamera;
 	public EventSystem eventSystem;
@@ -40,6 +42,7 @@ public class KanimController : MonoBehaviour {
 	public float fileListSpacing = 30;
 	public UnloadFileConfirmer confirmer;
 
+	private bool modifyingDropDown;
 	private bool dragging = false;
 	private Vector3 lastMousePosition;
 	private StoredFile currentAnimDef;
@@ -98,6 +101,50 @@ public class KanimController : MonoBehaviour {
 
 			orthoCamera.transform.position += new Vector3(newX - targetX, newY - targetY) * 2 * orthoCamera.orthographicSize;
 		} 
+
+		if (updatedAnimDef != null) {
+			List<Dropdown.OptionData> options = dropdown.options;
+			int i = dropdown.value;
+			int j = 0;
+			modifyingDropDown = true;
+
+			var currentOption = options[i].text;
+
+			foreach (var file in listedFiles) {
+				if (file.kanims != null) {
+					if (file.animDef == updatedAnimDef) {
+						kanim.SetCurrentKanim(file.kanims[i]);
+					}
+
+					if (i < file.kanims.Length) {
+						if (file.animDef == updatedAnimDef) {
+							options.RemoveRange(j, file.kanims.Length);
+							for (int k = file.animDef.kanims.Length - 1; k >= 0; k--) {
+								options.Insert(j, new Dropdown.OptionData(file.animDef.kanims[k].name));
+							}
+
+							file.kanims = file.animDef.kanims;
+							if (i < file.kanims.Length) {
+								kanim.SetCurrentKanim(file.kanims[i]);
+								j += i;
+							} else if (file.kanims.Length > 0) {
+								kanim.SetCurrentKanim(file.kanims[0]);
+							}
+
+							break;
+						}
+					} else {
+						i -= file.kanims.Length;
+						j += file.kanims.Length;
+					}
+				}
+			}
+
+			dropdown.options = options;
+			dropdown.value = j;
+			updatedAnimDef = null;
+			modifyingDropDown = false;
+		}
 	}
 
 	void RateChanged(float to) {
@@ -170,6 +217,9 @@ public class KanimController : MonoBehaviour {
 				updateFile.buildDef = build;
 				updateFile.directory = fullDirectoryPath;
 				updateFile.nameList = new List<string>();
+				if (anim != null) {
+					updateFile.kanims = anim.kanims;
+				}
 
 				updateFile.button = Instantiate(listedFileTemplate,listedFileTemplate.transform.parent).GetComponent<Button>();
 				updateFile.button.transform.GetChild(0).GetComponent<Text>().text = updateFile.directory;
@@ -232,14 +282,16 @@ public class KanimController : MonoBehaviour {
 	}
 
 	void OnDropDownChanged(int i) {
-		foreach (var file in listedFiles) {
-			if (file.animDef != null) {
-				if (i < file.animDef.kanims.Length) {
-					kanim.SetCurrentKanim(file.animDef.kanims[i]);
+		if (!modifyingDropDown) {
+			foreach (var file in listedFiles) {
+				if (file.animDef != null) {
+					if (i < file.animDef.kanims.Length) {
+						kanim.SetCurrentKanim(file.animDef.kanims[i]);
 
-					break;
-				} else {
-					i -= file.animDef.kanims.Length;
+						break;
+					} else {
+						i -= file.animDef.kanims.Length;
+					}
 				}
 			}
 		}

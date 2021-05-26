@@ -1,11 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using System.Collections.Concurrent;
 using System.Xml;
 using System.IO;
 using System.Globalization;
 using UnityEngine;
 
-public class AnimDef {
+public class AnimDef : CommonDef {
 	public class Kanim {
 		public class Frame {
 			public class Element {
@@ -27,14 +29,19 @@ public class AnimDef {
 		public string name;
 		public Frame[] frames;
 	}
+
 	public Kanim[] kanims;
 
-	public static AnimDef LoadAnimDef(string directory) {
+	public static AnimDef LoadAnimDef(AnimDef animDef, string directory) {
 		var fullFileName = directory + Path.DirectorySeparatorChar + "animation.xml";
 		if (File.Exists(fullFileName)) {
+			XmlReaderSettings settings = new XmlReaderSettings();
+			settings.IgnoreComments = true;
+			settings.IgnoreProcessingInstructions = true;
+			XmlReader reader = XmlReader.Create(fullFileName, settings);
 			XmlDocument anim = new XmlDocument();
-			anim.Load(fullFileName);
-			var animDef = new AnimDef();
+			anim.Load(reader);
+
 			animDef.kanims = new Kanim[anim.DocumentElement.ChildNodes.Count];
 
 			int aIdx = 0;
@@ -102,5 +109,31 @@ public class AnimDef {
 		}
 
 		return null;
+	}
+
+	public static AnimDef LoadAnimDef(string directory) {
+		var fullFileName = directory + Path.DirectorySeparatorChar + "animation.xml";
+		if (File.Exists(fullFileName)) {
+			var animDef = new AnimDef();
+			animDef.InitWatcher(directory);
+
+			if (LoadAnimDef(animDef, directory) != null) {
+				// Begin watching.
+				animDef.watcher.EnableRaisingEvents = true;
+				return animDef;
+			}
+		}
+
+		return null;
+	}
+
+	protected override void HandleFileChanged(FileSystemEventArgs e) {
+		string pattern = directory + "/(.+)\\.png";
+		string input = Regex.Replace(e.FullPath, "\\\\", "/");
+		
+		if (input == directory + "/" + "animation.xml") {
+			LoadAnimDef(this, directory);
+			KanimController.updatedAnimDef = this;
+		}
 	}
 }

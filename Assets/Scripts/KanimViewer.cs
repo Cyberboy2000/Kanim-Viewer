@@ -6,7 +6,7 @@ using System.IO;
 using System.Globalization;
 using UnityEngine;
 
-public class KanimViewer : MonoBehaviour {
+public class KanimViewer : MonoBehaviour, System.IDisposable {
 	[Range(0,60)]
 	public int frameRate = 30;
 	public bool paused = false;
@@ -28,6 +28,9 @@ public class KanimViewer : MonoBehaviour {
 	void Update() {
 		foreach (var build in buildDefs) {
 			build.OnUpdate();
+		}
+		foreach (var anim in animDefs) {
+			anim.OnUpdate();
 		}
 
 		if (currentKanim != null) {
@@ -125,14 +128,10 @@ public class KanimViewer : MonoBehaviour {
 	}
 
 	void OnApplicationQuit() {
-		foreach (var build in buildDefs) {
-			build.Dispose();
-		}
+		Dispose();
 	}
 	private void OnDestroy() {
-		foreach (var build in buildDefs) {
-			build.Dispose();
-		}
+		Dispose();
 	}
 
 	public void SetFrameRate(int rate) {
@@ -165,11 +164,13 @@ public class KanimViewer : MonoBehaviour {
 	public void RemoveBuildDef(BuildDef build) {
 		updateFrame = true;
 		buildDefs.Remove(build);
+		build.Dispose();
 	}
 
 	public void RemoveAnimDef(AnimDef anim) {
 		updateFrame = true;
 		animDefs.Remove(anim);
+		anim.Dispose();
 	}
 
 	public void SetCurrentKanim(AnimDef.Kanim kanim) {
@@ -181,5 +182,14 @@ public class KanimViewer : MonoBehaviour {
 
 	public AnimDef.Kanim GetCurrentKanim() {
 		return currentKanim;
+	}
+
+	public void Dispose() {
+		foreach (var build in buildDefs) {
+			build.Dispose();
+		}
+		foreach (var anim in animDefs) {
+			anim.Dispose();
+		}
 	}
 }

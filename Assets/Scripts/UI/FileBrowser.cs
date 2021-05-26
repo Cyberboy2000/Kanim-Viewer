@@ -20,7 +20,12 @@ public class FileBrowser : MonoBehaviour {
 
     // Start is called before the first frame update
     void Start() {
-		directory = Application.dataPath;
+		if (Directory.Exists(PlayerPrefs.GetString("LastDirectory"))) {
+			directory = PlayerPrefs.GetString("LastDirectory");
+		} else {
+			directory = Application.dataPath;
+		}
+
 		directory = directory.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 		pathText.text = directory;
 		gameObject.SetActive(false);
@@ -109,6 +114,8 @@ public class FileBrowser : MonoBehaviour {
 	}
 
 	private void OnClickFile() {
+		PlayerPrefs.SetString("LastDirectory", directory);
+		PlayerPrefs.Save();
 		callBack(directory);
 		HideFileBrowser();
 	}

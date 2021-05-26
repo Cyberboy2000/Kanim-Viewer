@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Security.Permissions;
@@ -8,7 +7,7 @@ using System.IO;
 using System.Globalization;
 using UnityEngine;
 
-public class BuildDef : System.IDisposable {
+public class BuildDef : CommonDef {
 	public class Symbol {
 		public class Frame {
 			public int framenum;
@@ -30,19 +29,19 @@ public class BuildDef : System.IDisposable {
 
 	public Dictionary<string, Symbol> symbols = new Dictionary<string, Symbol>();
 
+	Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
 	Dictionary<string, Texture2D> textures = new Dictionary<string, Texture2D>();
-	ConcurrentQueue<FileSystemEventArgs> fileChangedQueue = new ConcurrentQueue<FileSystemEventArgs>();
-	FileSystemWatcher watcher;
-	string directory;
 
-	public static BuildDef LoadBuildDef(string directory) {
+	public static BuildDef LoadBuildDef(BuildDef buildDef, string directory) {
 		var fullFileName = directory + Path.DirectorySeparatorChar + "build.xml";
 		if (File.Exists(fullFileName)) {
+			XmlReaderSettings settings = new XmlReaderSettings();
+			settings.IgnoreComments = true;
+			settings.IgnoreProcessingInstructions = true;
+			XmlReader reader = XmlReader.Create(fullFileName, settings);
 			XmlDocument build = new XmlDocument();
-			build.Load(fullFileName);
+			build.Load(reader);
 
-			var buildDef = new BuildDef(directory);
-			Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
 
 			foreach (XmlNode symbolXml in build.DocumentElement.ChildNodes) {
 				var symbolObj = new Symbol();
@@ -66,16 +65,16 @@ public class BuildDef : System.IDisposable {
 						symbolObj.frames[i] = frameObj;
 
 						try {
-							if (!sprites.ContainsKey(frameObj.image)) {
+							if (!buildDef.sprites.ContainsKey(frameObj.image)) {
 								byte[] pngBytes = File.ReadAllBytes(directory + "/" + frameObj.image + ".png");
 								Texture2D tex = new Texture2D(2, 2);
 								tex.LoadImage(pngBytes);
 								buildDef.textures.Add(frameObj.image, tex);
 								var sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0, 1), 1, 0, SpriteMeshType.FullRect);
 								sprite.name = frameObj.image;
-								sprites.Add(frameObj.image, sprite);
+								buildDef.sprites.Add(frameObj.image, sprite);
 							}
-							frameObj.sprite = sprites[frameObj.image];
+							frameObj.sprite = buildDef.sprites[frameObj.image];
 						} catch (System.Exception ex) {
 							Debug.Log("Failed to load file " + frameObj.image + " : " + ex);
 						}
@@ -87,32 +86,29 @@ public class BuildDef : System.IDisposable {
 				}
 			}
 
-			// Begin watching.
-			buildDef.watcher.EnableRaisingEvents = true;
 			return buildDef;
 		}
 
 		return null;
 	}
 
-	private BuildDef(string directory) {
-		this.directory = directory;
-		watcher = new FileSystemWatcher(directory, "*.png");
-		watcher.NotifyFilter = NotifyFilters.LastWrite
-							 | NotifyFilters.FileName
-							 | NotifyFilters.DirectoryName;
+	public static BuildDef LoadBuildDef(string directory) {
+		var fullFileName = directory + Path.DirectorySeparatorChar + "build.xml";
+		if (File.Exists(fullFileName)) {
+			var buildDef = new BuildDef();
+			buildDef.InitWatcher(directory);
 
-		// Add event handlers.
-		watcher.Changed += OnFileChanged;
-		watcher.Created += OnFileChanged;
-		watcher.Renamed += OnFileChanged;
+			if (LoadBuildDef(buildDef, directory) != null) {
+				// Begin watching.
+				buildDef.watcher.EnableRaisingEvents = true;
+				return buildDef;
+			}
+		}
+
+		return null;
 	}
 
-	private void OnFileChanged(object source, FileSystemEventArgs e) {
-		fileChangedQueue.Enqueue(e);
-	}
-
-	private void HandleFileChanged(FileSystemEventArgs e) {
+	protected override void HandleFileChanged(FileSystemEventArgs e) {
 		string pattern = directory + "/(.+)\\.png";
 		string input = Regex.Replace(e.FullPath, "\\\\", "/");
 		Match match = Regex.Match(input, pattern);
@@ -130,20 +126,9 @@ public class BuildDef : System.IDisposable {
 					Debug.Log("Failed to update file " + group.Value + " : " + ex);
 				}
 			}
-		}
-	}
-
-	public void OnUpdate() {
-		FileSystemEventArgs e;
-		if (fileChangedQueue.TryDequeue(out e)) {
-			HandleFileChanged(e);
-		}
-	}
-
-	public void Dispose() {
-		if (watcher != null) {
-			watcher.Dispose();
-			watcher = null;
+		} else if (input == directory + "/" + "build.xml") {
+			LoadBuildDef(this, directory);
+			KanimViewer.updateFrame = true;
 		}
 	}
 }
