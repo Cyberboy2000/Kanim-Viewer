@@ -41,7 +41,7 @@ public class BuildDef : CommonDef {
 			XmlReader reader = XmlReader.Create(fullFileName, settings);
 			XmlDocument build = new XmlDocument();
 			build.Load(reader);
-
+			reader.Close();
 
 			foreach (XmlNode symbolXml in build.DocumentElement.ChildNodes) {
 				var symbolObj = new Symbol();
@@ -76,10 +76,10 @@ public class BuildDef : CommonDef {
 							}
 							frameObj.sprite = buildDef.sprites[frameObj.image];
 						} catch (System.Exception ex) {
-							Debug.Log("Failed to load file " + frameObj.image + " : " + ex);
+							Debug.LogError("Failed to load file " + frameObj.image + " : " + ex);
 						}
 					} catch (System.Exception ex) {
-						Debug.Log("Failed to parse frame " + i + " of symbol " + symbolObj.name + " : " + ex);
+						Debug.LogError("Failed to parse frame " + i + " of symbol " + symbolObj.name + " : " + ex);
 					}
 
 					i++;
@@ -123,7 +123,7 @@ public class BuildDef : CommonDef {
 					byte[] pngBytes = File.ReadAllBytes(e.FullPath);
 					tex.LoadImage(pngBytes);
 				} catch (System.Exception ex) {
-					Debug.Log("Failed to update file " + group.Value + " : " + ex);
+					Debug.LogError("Failed to update file " + group.Value + " : " + ex);
 				}
 			}
 		} else if (input == directory + "/" + "build.xml") {

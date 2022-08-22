@@ -41,6 +41,7 @@ public class AnimDef : CommonDef {
 			XmlReader reader = XmlReader.Create(fullFileName, settings);
 			XmlDocument anim = new XmlDocument();
 			anim.Load(reader);
+			reader.Close();
 
 			animDef.kanims = new Kanim[anim.DocumentElement.ChildNodes.Count];
 

@@ -68,8 +68,8 @@ public class KanimController : MonoBehaviour {
 		bgColorBtn.onClick.AddListener(ShowBGColor);
 	}
 
-    // Update is called once per frame
-    void Update() {
+	// Update is called once per frame
+	void Update() {
 		idxTxt.text = "Frame Idx: " + kanim.GetFrameIdx();
 		rateTxt.text = "Frames Per Second: " + kanim.frameRate;
 		idxSlider.maxValue = kanim.GetAnimLength() - 1;
@@ -100,7 +100,7 @@ public class KanimController : MonoBehaviour {
 			float newY = targetY * oldSize / orthoCamera.orthographicSize;
 
 			orthoCamera.transform.position += new Vector3(newX - targetX, newY - targetY) * 2 * orthoCamera.orthographicSize;
-		} 
+		}
 
 		if (updatedAnimDef != null) {
 			List<Dropdown.OptionData> options = dropdown.options;
@@ -172,7 +172,7 @@ public class KanimController : MonoBehaviour {
 	}
 
 	void ResetPosition() {
-		orthoCamera.transform.position = new Vector3(0,0,-10);
+		orthoCamera.transform.position = new Vector3(0, 0, -10);
 	}
 
 	void Left() {
@@ -221,10 +221,10 @@ public class KanimController : MonoBehaviour {
 					updateFile.kanims = anim.kanims;
 				}
 
-				updateFile.button = Instantiate(listedFileTemplate,listedFileTemplate.transform.parent).GetComponent<Button>();
+				updateFile.button = Instantiate(listedFileTemplate, listedFileTemplate.transform.parent).GetComponent<Button>();
 				updateFile.button.transform.GetChild(0).GetComponent<Text>().text = updateFile.directory;
 				updateFile.button.transform.position -= new Vector3(0, fileListSpacing * listedFiles.Count);
-				updateFile.button.onClick.AddListener( delegate { OnClickFile(updateFile); } );
+				updateFile.button.onClick.AddListener(delegate { OnClickFile(updateFile); });
 				updateFile.button.gameObject.SetActive(true);
 
 				var rect = (RectTransform)updateFile.button.transform.parent;
@@ -265,8 +265,10 @@ public class KanimController : MonoBehaviour {
 		var i = listedFiles.IndexOf(file);
 
 		if (i >= 0) {
-			kanim.RemoveBuildDef(file.buildDef);
-			kanim.RemoveAnimDef(file.animDef);
+			if (file.buildDef != null)
+				kanim.RemoveBuildDef(file.buildDef);
+			if (file.animDef != null)
+				kanim.RemoveAnimDef(file.animDef);
 
 			var rect = (RectTransform)file.button.transform.parent;
 			rect.sizeDelta -= new Vector2(0, fileListSpacing);
