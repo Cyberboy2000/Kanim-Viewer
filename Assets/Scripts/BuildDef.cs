@@ -1,10 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using System.Security.Permissions;
 using System.Xml;
 using System.IO;
-using System.Globalization;
 using UnityEngine;
 
 public class BuildDef : CommonDef {
@@ -45,7 +42,7 @@ public class BuildDef : CommonDef {
 
 			foreach (XmlNode symbolXml in build.DocumentElement.ChildNodes) {
 				var symbolObj = new Symbol();
-				symbolObj.name = symbolXml.Attributes.GetNamedItem("name").InnerText;
+				symbolObj.name = ReadString(symbolXml,"name");
 				symbolObj.frames = new Symbol.Frame[symbolXml.ChildNodes.Count];
 				buildDef.symbols[symbolObj.name.ToLower()] = symbolObj;
 
@@ -54,13 +51,13 @@ public class BuildDef : CommonDef {
 					var frameObj = new Symbol.Frame();
 
 					try {
-						frameObj.framenum = int.Parse(frame.Attributes.GetNamedItem("framenum").InnerText);
-						frameObj.duration = int.Parse(frame.Attributes.GetNamedItem("duration").InnerText);
-						frameObj.w = int.Parse(frame.Attributes.GetNamedItem("w").InnerText);
-						frameObj.h = int.Parse(frame.Attributes.GetNamedItem("h").InnerText);
-						frameObj.x = float.Parse(frame.Attributes.GetNamedItem("x").InnerText, CultureInfo.InvariantCulture);
-						frameObj.y = float.Parse(frame.Attributes.GetNamedItem("y").InnerText, CultureInfo.InvariantCulture);
-						frameObj.image = frame.Attributes.GetNamedItem("image").InnerText;
+						frameObj.framenum = ReadInt(frame,"framenum");
+						frameObj.duration = ReadInt(frame, "duration");
+						frameObj.w = ReadInt(frame, "w");
+						frameObj.h = ReadInt(frame, "h");
+						frameObj.x = ReadFloat(frame, "x");
+						frameObj.y = ReadFloat(frame, "y");
+						frameObj.image = ReadString(frame, "image");
 
 						symbolObj.frames[i] = frameObj;
 

@@ -1,10 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Collections.Concurrent;
+﻿using System.Text.RegularExpressions;
 using System.Xml;
 using System.IO;
-using System.Globalization;
 using UnityEngine;
 
 public class AnimDef : CommonDef {
@@ -49,7 +45,7 @@ public class AnimDef : CommonDef {
 			foreach (XmlNode animXml in anim.DocumentElement.ChildNodes) {
 				var kanim = new Kanim();
 
-				kanim.name = animXml.Attributes.GetNamedItem("name").InnerText;
+				kanim.name = ReadString(animXml,"name");
 				kanim.frames = new Kanim.Frame[animXml.ChildNodes.Count];
 				animDef.kanims[aIdx] = kanim;
 				aIdx++;
@@ -67,22 +63,22 @@ public class AnimDef : CommonDef {
 						frameObj.elements[j] = elem;
 						j++;
 
-						elem.name = element.Attributes.GetNamedItem("name").InnerText;
-						elem.frame = int.Parse(element.Attributes.GetNamedItem("frame").InnerText);
+						elem.name = ReadString(element,"name");
+						elem.frame = ReadInt(element,"frame");
 						// Parent Transform
-						var p_a = float.Parse(element.Attributes.GetNamedItem("m0_a").InnerText, CultureInfo.InvariantCulture);
-						var p_b = float.Parse(element.Attributes.GetNamedItem("m0_b").InnerText, CultureInfo.InvariantCulture);
-						var p_c = float.Parse(element.Attributes.GetNamedItem("m0_c").InnerText, CultureInfo.InvariantCulture);
-						var p_d = float.Parse(element.Attributes.GetNamedItem("m0_d").InnerText, CultureInfo.InvariantCulture);
-						var p_tx = float.Parse(element.Attributes.GetNamedItem("m0_tx").InnerText, CultureInfo.InvariantCulture);
-						var p_ty = float.Parse(element.Attributes.GetNamedItem("m0_ty").InnerText, CultureInfo.InvariantCulture);
+						var p_a = ReadFloat(element,"m0_a", 1);
+						var p_b = ReadFloat(element,"m0_b");
+						var p_c = ReadFloat(element,"m0_c");
+						var p_d = ReadFloat(element,"m0_d", 1);
+						var p_tx = ReadFloat(element,"m0_tx");
+						var p_ty = ReadFloat(element,"m0_ty");
 						// Child Transform
-						var c_a = float.Parse(element.Attributes.GetNamedItem("m1_a").InnerText, CultureInfo.InvariantCulture);
-						var c_b = float.Parse(element.Attributes.GetNamedItem("m1_b").InnerText, CultureInfo.InvariantCulture);
-						var c_c = float.Parse(element.Attributes.GetNamedItem("m1_c").InnerText, CultureInfo.InvariantCulture);
-						var c_d = float.Parse(element.Attributes.GetNamedItem("m1_d").InnerText, CultureInfo.InvariantCulture);
-						var c_tx = float.Parse(element.Attributes.GetNamedItem("m1_tx").InnerText, CultureInfo.InvariantCulture);
-						var c_ty = float.Parse(element.Attributes.GetNamedItem("m1_ty").InnerText, CultureInfo.InvariantCulture);
+						var c_a = ReadFloat(element,"m1_a", 1);
+						var c_b = ReadFloat(element,"m1_b");
+						var c_c = ReadFloat(element,"m1_c");
+						var c_d = ReadFloat(element,"m1_d", 1);
+						var c_tx = ReadFloat(element,"m1_tx");
+						var c_ty = ReadFloat(element,"m1_ty");
 						// P * C
 						elem.a = p_a * c_a + p_c * c_b;
 						elem.b = p_b * c_a + p_d * c_b;
@@ -91,16 +87,16 @@ public class AnimDef : CommonDef {
 						elem.tx = p_a * c_tx + p_c * c_ty + p_tx;
 						elem.ty = p_b * c_tx + p_d * c_ty + p_ty;
 
-						var r = float.Parse(element.Attributes.GetNamedItem("c_00").InnerText, CultureInfo.InvariantCulture);
-						var g = float.Parse(element.Attributes.GetNamedItem("c_11").InnerText, CultureInfo.InvariantCulture);
-						var b = float.Parse(element.Attributes.GetNamedItem("c_22").InnerText, CultureInfo.InvariantCulture);
-						var alpha = float.Parse(element.Attributes.GetNamedItem("c_33").InnerText, CultureInfo.InvariantCulture);
+						var r = ReadFloat(element,"c_00", 1);
+						var g = ReadFloat(element,"c_11", 1);
+						var b = ReadFloat(element,"c_22", 1);
+						var alpha = ReadFloat(element,"c_33", 1);
 						elem.colorMult = new Color(r, g, b, alpha);
 
-						var rAdd = float.Parse(element.Attributes.GetNamedItem("c_04").InnerText, CultureInfo.InvariantCulture);
-						var gAdd = float.Parse(element.Attributes.GetNamedItem("c_14").InnerText, CultureInfo.InvariantCulture);
-						var bAdd = float.Parse(element.Attributes.GetNamedItem("c_24").InnerText, CultureInfo.InvariantCulture);
-						var aAdd = float.Parse(element.Attributes.GetNamedItem("c_34").InnerText, CultureInfo.InvariantCulture);
+						var rAdd = ReadFloat(element,"c_04");
+						var gAdd = ReadFloat(element,"c_14");
+						var bAdd = ReadFloat(element,"c_24");
+						var aAdd = ReadFloat(element,"c_34");
 						elem.colorAdd = new Color(rAdd, gAdd, bAdd, aAdd);
 					}
 				}
