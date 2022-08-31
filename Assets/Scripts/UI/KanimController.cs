@@ -33,11 +33,11 @@ public class KanimController : MonoBehaviour {
 	public Button addFileButton;
 	public Button quitButton;
 	public Button fullScreenButton;
-	public Button bgColorBtn;
+	public Button bgBtn;
 	public Button resetPositionButton;
 	public Button listedFileTemplate;
 	public FileBrowser fileBrowser;
-	public ColorPicker colorPicker;
+	public BackgroundChanger backgroundChanger;
 	public Dropdown dropdown;
 	public float fileListSpacing = 30;
 	public UnloadFileConfirmer confirmer;
@@ -65,7 +65,7 @@ public class KanimController : MonoBehaviour {
 		listedFileTemplate.gameObject.SetActive(false);
 		dropdown.onValueChanged.AddListener(OnDropDownChanged);
 		fullScreenButton.onClick.AddListener(FullScreen);
-		bgColorBtn.onClick.AddListener(ShowBGColor);
+		bgBtn.onClick.AddListener(ShowBgSelector);
 	}
 
 	// Update is called once per frame
@@ -197,7 +197,7 @@ public class KanimController : MonoBehaviour {
 		}
 	}
 
-	void TryAddFile(string fullDirectoryPath) {
+	void TryAddFile(string fullDirectoryPath, string fileName) {
 		fullDirectoryPath = Regex.Replace(fullDirectoryPath, "\\\\", "/");
 
 		StoredFile updateFile = null;
@@ -249,10 +249,13 @@ public class KanimController : MonoBehaviour {
 		}
 	}
 
+	bool ShouldShowFile(string fileName) {
+		return fileName == "animation.xml" || fileName == "build.xml";
+	}
+
 	void AddFile() {
 		if (!confirmer.isActiveAndEnabled && !fileBrowser.isActiveAndEnabled) {
-			fileBrowser.callBack = TryAddFile;
-			fileBrowser.ShowFileBrowser();
+			fileBrowser.ShowFileBrowser(TryAddFile, ShouldShowFile);
 		}
 	}
 
@@ -303,12 +306,8 @@ public class KanimController : MonoBehaviour {
 		Screen.fullScreen = !Screen.fullScreen;
 	}
 
-	void ShowBGColor() {
-		colorPicker.Show(orthoCamera.backgroundColor, ChangeBGColor);
-	}
-
-	void ChangeBGColor(Color color) {
-		orthoCamera.backgroundColor = color;
+	void ShowBgSelector() {
+		backgroundChanger.Show();
 	}
 
 	void Quit() {

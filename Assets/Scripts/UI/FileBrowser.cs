@@ -5,32 +5,28 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class FileBrowser : MonoBehaviour {
-	public delegate void OnCallBack(string fullDirectoryName);
+	public delegate void OnCallBack(string fullDirectoryName, string fileName);
+	public delegate bool ShouldShowFile(string fileName);
 	public Button buttonTemplate;
 	public float spacing = 30;
 	public Button acceptButton;
 	public Button cancelButton;
 	public Button goUpButton;
-	public OnCallBack callBack;
 	public Text pathText;
-	private string directory;
-	private List<Button> directoryContents = new List<Button>();
-	private int filesShown;
+
+	private OnCallBack _callBack;
+	private ShouldShowFile _shouldShowFile;
+	private string _directory;
+	private List<Button> _directoryContents = new List<Button>();
+	private string _directorySaveLocation;
+	private int _filesShown;
 
 
-    // Start is called before the first frame update
-    void Start() {
-		if (Directory.Exists(PlayerPrefs.GetString("LastDirectory"))) {
-			directory = PlayerPrefs.GetString("LastDirectory");
-		} else {
-			directory = Application.dataPath;
-		}
-
-		directory = directory.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
-		pathText.text = directory;
+	// Start is called before the first frame update
+	void Start() {
 		gameObject.SetActive(false);
 		buttonTemplate.gameObject.SetActive(false);
-		acceptButton.onClick.AddListener(OnClickFile);
+		acceptButton.onClick.AddListener(() => { OnClickFile(""); });
 		cancelButton.onClick.AddListener(HideFileBrowser);
 		goUpButton.onClick.AddListener(GoUp);
 	}
@@ -41,14 +37,14 @@ public class FileBrowser : MonoBehaviour {
 			fileName = fullPath;
 		}
 
-		if (isDirectory || fileName == "animation.xml" || fileName == "build.xml") {
-			if (directoryContents.Count <= i) {
+		if (isDirectory || _shouldShowFile(fileName)) {
+			if (_directoryContents.Count <= i) {
 				var newBtn = Instantiate(buttonTemplate, buttonTemplate.transform.parent);
-				newBtn.transform.localPosition -= new Vector3(0, spacing * directoryContents.Count);
-				directoryContents.Add(newBtn);
+				newBtn.transform.localPosition -= new Vector3(0, spacing * _directoryContents.Count);
+				_directoryContents.Add(newBtn);
 			}
 
-			var btn = directoryContents[i];
+			var btn = _directoryContents[i];
 			btn.gameObject.SetActive(true);
 			btn.onClick.RemoveAllListeners();
 			var text = btn.transform.GetChild(0).GetComponent<Text>();
@@ -56,7 +52,7 @@ public class FileBrowser : MonoBehaviour {
 			if (isDirectory) {
 				btn.onClick.AddListener(delegate () { OnClickDirectory(fullPath); });
 			} else {
-				btn.onClick.AddListener(OnClickFile);
+				btn.onClick.AddListener(() => { OnClickFile(fileName); });
 			}
 
 			return true;
@@ -65,22 +61,22 @@ public class FileBrowser : MonoBehaviour {
 		}
 	}
 
-	public void ShowFileBrowser() {
+	private void UpdateFileBrowser() {
 		IEnumerable<string> subdirs;
 		IEnumerable<string> files;
 
-		if (directory == "") {
+		if (_directory == "") {
 			subdirs = Directory.GetLogicalDrives();
 			files = new string[0];
-		} else if (directory.IndexOf(Path.DirectorySeparatorChar) <= 0) {
-			subdirs = Directory.EnumerateDirectories(directory + Path.DirectorySeparatorChar);
-			files = Directory.EnumerateFiles(directory + Path.DirectorySeparatorChar);
+		} else if (_directory.IndexOf(Path.DirectorySeparatorChar) <= 0) {
+			subdirs = Directory.EnumerateDirectories(_directory + Path.DirectorySeparatorChar);
+			files = Directory.EnumerateFiles(_directory + Path.DirectorySeparatorChar);
 		} else {
-			subdirs = Directory.EnumerateDirectories(directory);
-			files = Directory.EnumerateFiles(directory);
+			subdirs = Directory.EnumerateDirectories(_directory);
+			files = Directory.EnumerateFiles(_directory);
 		}
 
-		pathText.text = directory;
+		pathText.text = _directory;
 
 		int i = 0;
 		foreach (var subdir in subdirs) {
@@ -93,15 +89,32 @@ public class FileBrowser : MonoBehaviour {
 		}
 
 		var rect = (RectTransform)buttonTemplate.transform.parent;
-		rect.sizeDelta += new Vector2(0, spacing * (i - filesShown));
-		filesShown = i;
+		rect.sizeDelta += new Vector2(0, spacing * (i - _filesShown));
+		_filesShown = i;
 
-		for (;i < directoryContents.Count; i++) {
-			var btn = directoryContents[i];
+		for (; i < _directoryContents.Count; i++) {
+			var btn = _directoryContents[i];
 			btn.gameObject.SetActive(false);
 		}
+	}
 
+	public void ShowFileBrowser(OnCallBack callback, ShouldShowFile shouldShowFile, string directorySaveLocation = "LastDirectory") {
+		if (Directory.Exists(PlayerPrefs.GetString(directorySaveLocation))) {
+			_directory = PlayerPrefs.GetString(directorySaveLocation);
+		} else if (Directory.Exists(PlayerPrefs.GetString("LastDirectory"))) {
+			_directory = PlayerPrefs.GetString("LastDirectory");
+		} else {
+			_directory = Application.dataPath;
+		}
+
+		_directorySaveLocation = directorySaveLocation;
+		_directory = _directory.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+		pathText.text = _directory;
+
+		_callBack = callback;
+		_shouldShowFile = shouldShowFile;
 		gameObject.SetActive(true);
+		UpdateFileBrowser();
 	}
 
 	public void HideFileBrowser() {
@@ -109,25 +122,25 @@ public class FileBrowser : MonoBehaviour {
 	}
 
 	private void OnClickDirectory(string fullPath) {
-		directory = fullPath;
-		ShowFileBrowser();
+		_directory = fullPath;
+		UpdateFileBrowser();
 	}
 
-	private void OnClickFile() {
-		PlayerPrefs.SetString("LastDirectory", directory);
+	private void OnClickFile(string fileName) {
+		PlayerPrefs.SetString(_directorySaveLocation, _directory);
 		PlayerPrefs.Save();
-		callBack(directory);
+		_callBack(_directory, fileName);
 		HideFileBrowser();
 	}
 
 	private void GoUp() {
-		var i = directory.LastIndexOf(Path.DirectorySeparatorChar);
+		var i = _directory.LastIndexOf(Path.DirectorySeparatorChar);
 		if (i > 0) {
-			directory = directory.Substring(0,i);
+			_directory = _directory.Substring(0, i);
 		} else {
-			directory = "";
+			_directory = "";
 		}
 
-		ShowFileBrowser();
+		UpdateFileBrowser();
 	}
 }

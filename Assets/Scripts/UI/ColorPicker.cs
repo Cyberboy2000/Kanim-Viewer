@@ -16,7 +16,6 @@ public class ColorPicker : MonoBehaviour {
 
 	// Start is called before the first frame update
 	void Start() {
-		gameObject.SetActive(false);
 		red.onValueChanged.AddListener(OnRedChange);
 		red.GetComponentInChildren<InputField>().onValueChanged.AddListener(OnRedChange);
 		green.onValueChanged.AddListener(OnGreenChange);
@@ -26,6 +25,7 @@ public class ColorPicker : MonoBehaviour {
 		closeBtn.onClick.AddListener(Hide);
 		resetBtn.onClick.AddListener(Default);
 		pickerImages = GetComponentsInChildren<ColorPickerImage>();
+		gameObject.SetActive(false);
 	}
 
 	void OnChange(Slider s, int i) {
@@ -37,7 +37,9 @@ public class ColorPicker : MonoBehaviour {
 			img.color = color;
 		}
 
-		callback(color);
+		if (callback != null) {
+			callback(color);
+		}
 	}
 
 	void OnRedChange(string s) {
@@ -76,7 +78,7 @@ public class ColorPicker : MonoBehaviour {
 		gameObject.SetActive(false);
 	}
 
-	void Default() {
+	public void Default() {
 		OnRedChange(49);
 		OnGreenChange(77);
 		OnBlueChange(121);
