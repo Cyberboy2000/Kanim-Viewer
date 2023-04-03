@@ -12,6 +12,7 @@ public class KanimViewer : MonoBehaviour, System.IDisposable {
 	public bool paused = false;
 	public Material material;
 	public Transform spriteParent;
+	public FrameOverride frameOverride;
 
 	List<BuildDef> buildDefs = new List<BuildDef>();
 	List<AnimDef> animDefs = new List<AnimDef>();
@@ -66,10 +67,17 @@ public class KanimViewer : MonoBehaviour, System.IDisposable {
 					if (i < currentFrame.elements.Length) {
 						var propertyBlock = propertyBlocks[i];
 						var element = currentFrame.elements[i];
+
+#if UNITY_EDITOR
+						if (frameOverride != null) {
+							element = frameOverride.Override(element, frameIdx);
+						}
+#endif
+
 						var frame = FindSymbolFrame(element.name, element.frame);
 						render.gameObject.name = element.name + ' ' + element.frame;
 
-						if (frame != null) {
+						if (frame != null && frame.sprite != null) {
 							propertyBlock.SetFloat("_a", element.a);
 							propertyBlock.SetFloat("_b", -element.b);
 							propertyBlock.SetFloat("_c", -element.c);

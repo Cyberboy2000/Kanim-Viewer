@@ -36,6 +36,7 @@ public class LogCallback : MonoBehaviour {
 	void Log(string message, string stackTrace, LogType logType) {
 		text.text = message + "\n" + stackTrace;
 		switch (logType) {
+			case LogType.Error:
 			case LogType.Assert:
 			case LogType.Exception:
 				text.color = Color.red;

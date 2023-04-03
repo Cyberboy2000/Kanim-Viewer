@@ -106,21 +106,23 @@ public class BuildDef : CommonDef {
 	}
 
 	protected override void HandleFileChanged(FileSystemEventArgs e) {
-		string pattern = directory + "/(.+)\\.png";
 		string input = Regex.Replace(e.FullPath, "\\\\", "/");
-		Match match = Regex.Match(input, pattern);
+		string imageName = "";
 
-		if (match.Success) {
-			Group group = match.Groups[1];
-			if (textures.ContainsKey(group.Value)) {
+		if (input.Length > directory.Length + 5 && input.Substring(0, directory.Length) == directory && input.Substring(input.Length - 4, 4) == ".png") {
+			imageName = input.Substring(directory.Length + 1, (input.Length - directory.Length - 5));
+		}
+
+		if (imageName != "") {
+			if (textures.ContainsKey(imageName)) {
 				KanimViewer.updateFrame = true;
 
 				try {
-					var tex = textures[group.Value];
+					var tex = textures[imageName];
 					byte[] pngBytes = File.ReadAllBytes(e.FullPath);
 					tex.LoadImage(pngBytes);
 				} catch (System.Exception ex) {
-					Debug.LogError("Failed to update file " + group.Value + " : " + ex);
+					Debug.LogError("Failed to update file " + imageName + " : " + ex);
 				}
 			}
 		} else if (input == directory + "/" + "build.xml") {
